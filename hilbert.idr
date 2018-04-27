@@ -8,30 +8,32 @@ data Point a = Pt a
 data Line a = Ln a
 
 data LiesOn : Point a -> Line a -> Type where
-  --OnLine : (p : Point a) -> (l : Line a) -> LiesOn p l
 
 data Between : Point a -> Point a -> Point a -> Type where
-  --InBetween : (p1 : Point a) -> (p2 : Point a) -> (p3 : Point a) -> Betweenness p1 p2 p3
 
-data LineCongruence : Line a -> Line a -> Type where
-  --LineCong : (l1 : Line a) -> (l2 : Line a) -> LineCongruence l1 l2
+data LineCong: Line a -> Line a -> Type where
 
 record Angle a where
   constructor MkAngle
   l1 : Line a
   l2 : Line a
 
-record LineSegment a where
+record Segment a where
   constructor MkSegment
   p1 : Point a
   p2 : Point a
 
-newLineSegment : (p1 : Point a) -> (p2 : Point a) -> (l : Line a) -> 
-                 {auto prf1 : LiesOn p1 l} -> {auto prf2 : LiesOn p2 l} -> LineSegment a
-newLineSegment p1 p2 l = MkSegment p2 p2
+data SegCong : Segment a -> Segment a -> Type where
+
+newSegment : (p1 : Point a) -> (p2 : Point a) -> (l : Line a) -> 
+                 {auto prf1 : LiesOn p1 l} -> {auto prf2 : LiesOn p2 l} -> Segment a
+newSegment p1 p2 l = MkSegment p2 p2
 
 data AngleCongruence : Angle a -> Angle a -> Type where
   AngleCong : (a1 : Angle a) -> (a2 : Angle a) -> AngleCongruence a1 a2
+
+Seg : (p1 : Point a) -> (p2 :  Point a) -> Type
+Seg p1 p2 = (l : Line a ** (LiesOn p1 l, LiesOn p2 l))
 
 --------------------------
 ---- Hilbert's Axioms ----
@@ -39,6 +41,9 @@ data AngleCongruence : Angle a -> Angle a -> Type where
 
 contains : (p1 : Point a) -> (p2 : Point a) -> (l : Line a) -> Type
 contains p1 p2 l = (p1 `LiesOn` l, p2 `LiesOn` l)
+
+Intersect : (l1 : Line x) -> (l2 : Line x) -> Type
+Intersect l1 l2 = (p : Point x ** (p `LiesOn` l1, p `LiesOn` l2))
 
 contains' : (p1 : Point a) -> (p2 : Point a) -> (p3 : Point a) -> (l : Line a) -> Type
 contains' p1 p2 p3 l = (p1 `LiesOn` l, p2 `LiesOn` l, p3 `LiesOn` l)
@@ -80,13 +85,24 @@ postulate II2 : (a : Point x) -> (c : Point x) -> [a c = l] -> (b : Point x ** (
 postulate II3 : (a : Point x) -> (b : Point x) -> (c : Point x) -> [a b c = l] -> 
                 (Either (Either (b = c) (b = a)) [a > b < c])
                 
+||| Given three points and a line that does not cross with any of them
+||| if the line goes between a and b then it also either goes betwneen a and c or b and c
 postulate II4 : (a : Point x) -> (b : Point x) -> (c : Point x) -> (l : Line x) -> 
                 Not (a `LiesOn`l) -> Not (b `LiesOn` l) -> Not (c `LiesOn` l) ->
                 (k : Point x) -> [a > k < b] -> k `LiesOn` l ->
                      (m : Point x ** (m `LiesOn` l, Either [a > m < c] [b > m < c]))
---                ((Not (a `LiesOn` l)), (Not (b `LiesOn` l)), (Not (c `LiesOn` l))) -> 
---                ((k : Point x), (a > k < b), (k `LiesOn` l)) ->
---                (m : Point x ** (m `LiesOn` l, Either (a > m < c) (b > m < c))
---
 
 
+-- Congruence
+postulate III1 : [a b = l] -> Not (a = b) -> (a' : Point x) -> a `LiesOn` d
+
+postulate III2 : (s1 : Seg p1 p2) -> (s2 : Seg p3 p4) -> (s3 : Seg p5 p6) ->
+                 SegCong s1 s2 -> SegCong s1 s3 -> SegCong s2 s3
+
+-- Parallels
+||| given a line `l` and a point `p` not on the line, there exist at most one line phat passes through `p` and
+||| does not interesect `l`
+postulate IV : (l : Line x) -> (p : Point x) -> (Not (p `LiesOn` l)) ->
+               ((k : Line x ** (p `LiesOn` k, Not (Intersect l k))),
+               (k' : Line x ** (p `LiesOn` k', Not (Intersect l k')))) ->
+               k = k'
